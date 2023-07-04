@@ -4,7 +4,6 @@ from shutil import rmtree, copy as shutilcopy
 
 from sys import stderr
 
-from ..spec.ir.type import Type, BoolType, IntType, UIntType
 
 class CodeGen:
     def __init__(self, args, ctx):
@@ -33,7 +32,10 @@ class CodeGen:
             filename = "/dev/null"
         else:
             filename = pathjoin(self.out_dir, name)
-            assert filename not in self._generated_files, (filename, self._generated_files)
+            assert filename not in self._generated_files, (
+                filename,
+                self._generated_files,
+            )
             self._generated_files.append(filename)
         return open(filename, "w")
 
