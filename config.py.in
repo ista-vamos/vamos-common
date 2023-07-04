@@ -1,0 +1,17 @@
+
+source_dir = "@CMAKE_CURRENT_SOURCE_DIR@"
+
+# vamos_buffers_DIR         = "@vamos-buffers_DIR@"
+# vamos_buffers_BINARY_DIR  = "@vamos-buffers_BINARY_DIR@"
+# vamos_buffers_SOURCE_DIR  = "@vamos-buffers_SOURCE_DIR@"
+
+# vamos_buffers_LIBRARIES_DIRS_core = "@vamos-buffers_LIBRARIES_DIRS_core@"
+# vamos_buffers_LIBRARIES_DIRS_shmbuf = "@vamos-buffers_LIBRARIES_DIRS_shmbuf@"
+# vamos_buffers_LIBRARIES_DIRS_streams = "@vamos-buffers_LIBRARIES_DIRS_streams@"
+# vamos_buffers_INCLUDE_DIR = "@vamos-buffers_DIR@/../../include"
+
+# vamos_buffers_BUILD_TYPE               = "@vamos-buffers_BUILD_TYPE@"
+# vamos_buffers_C_COMPILER               = "@vamos-buffers_C_COMPILER@"
+
+# vamos_buffers_OPTION_ENABLE_IPO        = "@vamos-buffers_OPTION_ENABLE_IPO@".upper()
+

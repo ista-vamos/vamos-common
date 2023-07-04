@@ -1,0 +1,76 @@
+start: events_and_imports statements
+events_and_imports: (eventsspec [imports] | imports eventsspec)
+// for inlined specifications
+inlined: events_and_imports? statements
+
+eventsspec: [eventsfile] eventdecl+
+eventsfile: "events" ESCAPED_STRING ";"? WSEOL
+
+imports: importmod+
+importmod: "import" name ";"? WSEOL
+WSEOL: /\s*\n/
+
+statements: statement+
+
+statement: _statement_expr ";"? | _statement ";"
+_statement_expr: let | foreach | ifexpr | newexpr
+_statement: runcommand | methodcall | yieldto | cont | brk
+
+cont: "continue"
+brk: "break"
+
+let: "let" name "=" expr
+ifexpr: "if" (boolexpr | methodcall | value) "{" statements "}" ["else" "{" statements "}"]
+foreach: "foreach" name "in" iterable "{" statements "}"
+runcommand: "run" /[^\n]/*
+yieldto: "yield" eventseq "to" tracename
+eventseq: event+
+tracename: NAME
+event: name ["(" params ")"]
+
+
+// FIXME
+boolexpr.1: "true" | "false"
+          | "!" boolexpr     -> not
+          | expr "in" expr -> is_in
+          | compareexpr
+          | "(" boolexpr ")"
+
+compareexpr:  expr "==" expr   -> eq
+            | expr "!=" expr   -> ne
+            | expr ">=" expr   -> ge
+            | expr "<=" expr   -> le
+            | expr "<" expr    -> lt
+            | expr ">" expr    -> gt
+
+expr: boolexpr | newexpr | methodcall | specarg | constant | name | "(" expr ")"
+
+specarg: "$" NUMBER
+iterable: name | methodcall
+
+newexpr: "new" type
+methodcall: (name | expr) "." name "(" [params] ")"
+params: (name | expr) ("," (name | expr))*
+
+constant: NUMBER -> constant_number
+         | ESCAPED_STRING -> constant_string
+         | constant_tuple
+tuple: "(" expr ("," expr)+  ")"
+constant_tuple: "(" constant ("," constant)+  ")"
+value: NAME
+
+//%import types.typeannot
+%import types.type
+%import events.eventdecl_imp -> eventdecl
+%import comm.name
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+%import common.ESCAPED_STRING
+%import common.WS_INLINE
+%import common.WS
+
+COMMENT: "--" /[^\n]/*
+
+%ignore COMMENT
+%ignore WS

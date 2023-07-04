@@ -1,0 +1,15 @@
+@PACKAGE_INIT@
+
+#set( vamos-common_BUILD_TYPE @CMAKE_BUILD_TYPE@ )
+#set( vamos-common_C_COMPILER @CMAKE_C_COMPILER@ )
+#set( vamos-common_CXX_COMPILER @CMAKE_CXX_COMPILER@ )
+#set( vamos-common_BINARY_DIR @vamos-common_BINARY_DIR@ )
+#set( vamos-common_SOURCE_DIR @vamos-common_BINARY_DIR@ )
+#set( vamos-common_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/../../include" )
+#set( vamos-common_OPTION_ENABLE_IPO @ENABLE_IPO@ )
+
+set( vamos-common_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@ )
+set( vamos-common_PYTHONPATH "@vamos-common_SOURCE_DIR@/python" )
+
+#include ( "${CMAKE_CURRENT_LIST_DIR}/vamos-common.cmake" )
+
