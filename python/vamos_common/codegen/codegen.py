@@ -6,22 +6,22 @@ from sys import stderr
 
 
 class CodeGen:
-    def __init__(self, args, ctx):
+    def __init__(self, args, out_dir_exists=False):
         self.args = args
         self._generated_files = []
         self.out_dir = abspath(args.out_dir)
         self.templates_path = None
-        self.ctx = ctx
 
-        try:
-            mkdir(self.out_dir)
-        except OSError:
-            print("The output dir exists, overwriting its contents", file=stderr)
-            rmtree(self.out_dir)
-            mkdir(self.out_dir)
+        if not out_dir_exists:
+            try:
+                mkdir(self.out_dir)
+            except OSError:
+                print("The output dir exists, overwriting its contents", file=stderr)
+                rmtree(self.out_dir)
+                mkdir(self.out_dir)
 
-        if args.debug:
-            mkdir(f"{self.out_dir}/dbg")
+            if args.debug:
+                mkdir(f"{self.out_dir}/dbg")
 
     def copy_file(self, name):
         path = pathjoin(self.templates_path, name)
