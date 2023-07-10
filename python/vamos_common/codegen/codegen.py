@@ -39,6 +39,13 @@ class CodeGen:
             self._generated_files.append(filename)
         return open(filename, "w")
 
+    def get_path(self, name):
+        return pathjoin(self.out_dir, name)
+
+    def try_clang_format_file(self, name):
+        from subprocess import run
+        run(["clang-format", "-i", self.get_path(name)])
+
     def new_dbg_file(self, name):
         filename = pathjoin(self.out_dir, "dbg/", name)
         return open(filename, "w")
