@@ -20,7 +20,7 @@ class Context:
         :return: str with a name of the trace.
         """
         if not ty in self.tracetypes:
-            self.tracetypes[ty] = f"Trace_{len(self.tracetypes)}"
+            self.tracetypes[ty] = f"TraceTy_{len(self.tracetypes)}"
 
         return self.tracetypes[ty]
 

@@ -6,66 +6,38 @@ class CodeGenCpp(CodeGen):
     def __init__(self, args, ctx):
         super().__init__(args, ctx)
 
-    def generate(self, events):
-        self._gen_h(events)
-        self._gen_cpp(events)
+    def generate(self, tracetypes, events):
+        self._gen_h(tracetypes, events)
+        # self._gen_cpp(tracetypes, events)
 
-    def _gen_h(self, events):
-        with self.new_file("events.h") as f:
+    def _gen_h(self, tracetypes, eventdecls):
+        name_to_ev = {ev.name.name: ev for ev in eventdecls}
+
+        with self.new_file("traces.h") as f:
             wr = f.write
-            wr(
-                "#ifndef VAMOS_CODEGEN_EVENTS_EVENTS_H_\n#define VAMOS_CODEGEN_EVENTS_EVENTS_H_\n\n"
-            )
+            wr("#ifndef VAMOS_CODEGEN_TRACES_H_\n#define VAMOS_CODEGEN_TRACES_H_\n\n")
             wr("#include <vamos-buffers/cpp/event.h>\n\n")
             wr("using vamos::Event;\n\n")
 
-            wr("enum class Kind : vms_kind {\n")
-            wr("  END = Event::doneKind(),\n")
-            for n, event in enumerate(events):
-                wr(
-                    f'  {event.name.name}{" = Event::firstValidKind()" if n == 0 else ""},\n'
-                )
-            wr("};\n\n")
-
-            for event in events:
-                sname = event.name.name
-                ename = f"Event_{sname}"
-                wr(f"struct {ename} : public Event {{\n")
-                for field in event.fields:
-                    wr(f"  {cpp_type(field.type())} {field.name.name}; // {field}\n")
+            for ty, name in tracetypes.items():
+                ename = f"Event_{name}"
+                wr(f"union {ename} {{\n")
+                wr("  Event base;\n")
+                for event_ty in ty.subtypes:
+                    sname = event_ty.name
+                    wr(f"  Event_{sname} {sname};\n")
                 wr("\n")
 
-                wr(f"  {ename}() = default;\n")
+                wr(f"  {ename}() : Event() {{}}\n")
+                for event_ty in ty.subtypes:
+                    sname = event_ty.name
+                    wr(f"  {ename}(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
+
                 wr(
-                    f"  {ename}(vms_eventid id) : Event((vms_kind)Kind::{sname}, id) {{}}\n"
+                    "\n  template <Kind k> bool isa() const { return base.kind() == k; }\n"
                 )
 
-                wr("\n")
-                wr(f"  bool operator==(const {ename}& rhs) const {{\n")
-                wr("    return ")
-                if event.fields:
-                    for n, field in enumerate(event.fields):
-                        if n > 0:
-                            wr(" && ")
-                        wr(f"{field.name.name} == rhs.{field.name.name}")
-                else:
-                    wr("true")
-                wr(";\n  }\n")
-                wr(f"}};\n\n")
-
-            wr("union AnyEvent {\n")
-            wr("  Event base;\n")
-            for event in events:
-                sname = event.name.name
-                wr(f"  Event_{sname} {sname};\n")
-
-            wr("\n")
-            wr("  AnyEvent() : Event() ;\n")
-            for event in events:
-                sname = event.name.name
-                wr(f"  AnyEvent(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
-
-            wr("\n  template <Kind k> bool isa() const { return base.kind() == k; }\n")
+                wr("};\n\n")
 
             # wr(
             #    "  bool operator==(const AnyEvent &rhs) const {\n"
@@ -84,7 +56,6 @@ class CodeGenCpp(CodeGen):
             # wr(
             #    "  bool operator!=(const TraceEvent &rhs) const { return !operator==(rhs); }\n"
             # )
-            wr("};\n\n")
 
             # if self.args.debug:
             #    wr(
@@ -106,8 +77,8 @@ class CodeGenCpp(CodeGen):
             'static const char *color_reset = "\033[0m";\n\n'
         )
 
-    def _gen_cpp(self, events):
-        with self.new_file("events.cpp") as f:
+    def _gen_cpp(self, tracetypes, events):
+        with self.new_file("traces.cpp") as f:
             wr = f.write
 
             self._events_cpp_begin(wr)
