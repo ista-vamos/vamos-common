@@ -16,6 +16,7 @@ class Type:
 class UserType(Type):
     def __init__(self, name):
         super().__init__()
+        assert isinstance(name, str), name
         self.name = name
 
     def __str__(self):
@@ -87,15 +88,6 @@ class UIntType(NumType):
         return f"UInt{self.bitwidth}"
 
 
-class IterableType(Type):
-    @property
-    def children(self):
-        return ()
-
-
-ITERABLE_TYPE = IterableType()
-
-
 class IteratorType(Type):
     @property
     def children(self):
@@ -115,9 +107,21 @@ class OutputType(Type):
         return ()
 
 
+class IterableType(Type):
+    @property
+    def children(self):
+        return ()
+
+
+ITERABLE_TYPE = IterableType()
+
+
 class TraceType(IterableType):
     def __init__(self, subtypes):
         super().__init__()
+        assert all(
+            map(lambda ty: isinstance(ty, (SimpleType, UserType)), subtypes)
+        ), subtypes
         self.subtypes = set(subtypes)
 
     def __str__(self):
@@ -125,6 +129,9 @@ class TraceType(IterableType):
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.subtypes == other.subtypes
+
+    def __hash__(self):
+        return hash(str(self))
 
     @property
     def children(self):

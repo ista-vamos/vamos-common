@@ -14,7 +14,10 @@ class CodeGen:
         self.ctx = ctx
 
         out_dir_overwrite = args.out_dir_overwrite
-        print(f"Output dir: {self.out_dir} {'(not overwritting)' if not out_dir_overwrite else ''}", file=stderr)
+        print(
+            f"Output dir: {self.out_dir} {'(not overwritting)' if not out_dir_overwrite else ''}",
+            file=stderr,
+        )
 
         try:
             mkdir(self.out_dir)
@@ -28,10 +31,10 @@ class CodeGen:
             try:
                 mkdir(f"{self.out_dir}/dbg")
             except OSError:
-                pass # exists
+                pass  # exists
 
     def copy_file(self, name):
-        path = pathjoin(self.templates_path, name)
+        path = name if name[0] == "/" else pathjoin(self.templates_path, name)
         shutilcopy(path, self.out_dir)
 
     def new_file(self, name):
@@ -51,6 +54,7 @@ class CodeGen:
 
     def try_clang_format_file(self, name):
         from subprocess import run
+
         run(["clang-format", "-i", self.get_path(name)])
 
     def new_dbg_file(self, name):

@@ -6,10 +6,26 @@ class Context:
         self.decls = {}
         self.eventdecls = {}
         self.usertypes = {}
+        self.tracetypes = {}
 
         # self.decls = ctx.get('decls') if ctx else {}
         # self.eventdecls = ctx.get('eventdecls') if ctx else {}
         # self.usertypes = ctx.get('usertypes') if ctx else {}
+
+    def add_tracetype(self, ty):
+        """
+        Generate the name for trace type. Same (compatible) trace types have the same name
+        (as determined by the __eq__ method on TraceType class).
+
+        :return: str with a name of the trace.
+        """
+        if not ty in self.tracetypes:
+            self.tracetypes[ty] = f"Trace_{len(self.tracetypes)}"
+
+        return self.tracetypes[ty]
+
+    def get_tracetype(self, ty):
+        return self.tracetypes.get(ty)
 
     def add_eventdecl(self, *decls):
         for decl in decls:
@@ -24,6 +40,7 @@ class Context:
             raise RuntimeError(f"Repeated declaration of an event: {decl}")
 
         self.eventdecls[name] = decl
+        assert self.get_eventdecl(name) is decl
 
     def get_eventdecl(self, name):
         if isinstance(name, Identifier):
@@ -32,6 +49,8 @@ class Context:
         return self.eventdecls.get(name)
 
     def dump(self):
-        print(self.decls)
-        print(self.eventdecls)
-        print(self.usertypes)
+        print(self, ":")
+        print("Decls     :", self.decls)
+        print("EventDecls:", self.eventdecls)
+        print("UTypes    :", self.usertypes)
+        print("TTypes    :", self.usertypes)
