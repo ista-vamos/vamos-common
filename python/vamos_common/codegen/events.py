@@ -109,7 +109,7 @@ class CodeGenCpp(CodeGen):
         if not event.fields:
             wr(f'  s << ")";\n')
         else:
-            wr(f'  s << ";; ";\n')
+            wr(f'  s << ", ";\n')
             for n, field in enumerate(event.fields):
                 if n > 1:
                     wr(f'  s << ", ";\n')

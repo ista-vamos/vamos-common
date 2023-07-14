@@ -91,10 +91,13 @@ class NumType(SimpleType):
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.bitwidth == other.bitwidth
 
-    def __str__(self):
+    def __hash__(self):
+        return hash(self.__repr__())
+
+    def __repr__(self):
         if self.bitwidth is None:
-            return "Num"
-        return f"Num{self.bitwidth}"
+            return "NumTy(?)"
+        return f"NumTy({self.bitwidth})"
 
     def unify(self, other):
         if issubclass(type(other), NumType):
