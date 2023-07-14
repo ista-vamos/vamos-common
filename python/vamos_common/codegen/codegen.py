@@ -1,5 +1,5 @@
 from os import mkdir
-from os.path import join as pathjoin, abspath
+from os.path import join as pathjoin, abspath, dirname
 from shutil import rmtree, copy as shutilcopy
 
 from sys import stderr
@@ -34,7 +34,19 @@ class CodeGen:
                 pass  # exists
 
     def copy_file(self, name):
+        """
+        Copy a template file that resides in `self.templates_path` if the path is given
+        as relative, otherwise copy the given file if the path is absolute.
+        """
         path = name if name[0] == "/" else pathjoin(self.templates_path, name)
+        shutilcopy(path, self.out_dir)
+
+    def copy_common_file(self, name):
+        """
+        Copy a template file that resides in vamos-common repo.
+        """
+        assert name[0] != "/", name
+        path = pathjoin(dirname(__file__), "templates", name)
         shutilcopy(path, self.out_dir)
 
     def new_file(self, name):
