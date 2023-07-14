@@ -1,5 +1,4 @@
 from .codegen import CodeGen
-from .lang.cpp import cpp_type
 
 
 class CodeGenCpp(CodeGen):
@@ -7,19 +6,24 @@ class CodeGenCpp(CodeGen):
         super().__init__(args, ctx)
 
     def generate(self, tracetypes, events):
-        self._gen_h(tracetypes, events)
-        # self._gen_cpp(tracetypes, events)
+        self._gen_h(tracetypes)
+        self._gen_cpp(tracetypes)
 
-    def _gen_h(self, tracetypes, eventdecls):
+    def _gen_h(self, tracetypes):
         # name_to_ev = {ev.name.name: ev for ev in eventdecls}
 
         with self.new_file("traces.h") as f:
             wr = f.write
             wr("#ifndef VAMOS_CODEGEN_TRACES_H_\n#define VAMOS_CODEGEN_TRACES_H_\n\n")
+            wr("#include <iostream>\n\n")
+            wr('#include "trace.h"\n')
+            wr('#include "event_and_id.h"\n')
+            wr('#include "stdout_trace.h"\n')
             wr("#include <vamos-buffers/cpp/event.h>\n\n")
             wr("using vamos::Event;\n\n")
 
-            for ty, name in tracetypes.items():
+            for ty, tracety in tracetypes.items():
+                name = tracety.name
                 ###
                 ## Event in the trace `name`
                 ename = f"Event_{name}"
@@ -38,92 +42,89 @@ class CodeGenCpp(CodeGen):
                 wr(
                     "\n  template <Kind k> bool isa() const { return base.kind() == (vms_kind)k; }\n"
                 )
+                wr(f"  void set_id(vms_eventid id) {{ base.set_id(id); }}\n")
+                wr(f"  vms_eventid id() const {{ return base.id(); }}\n")
+                wr(f"  vms_kind kind() const {{ return base.kind(); }}\n")
 
                 wr("};\n\n")
+
+                wr(f"std::ostream &operator<<(std::ostream &s, const {ename} &ev);\n")
+                wr("/* print the event with an explicitly given ID */\n")
+                wr(
+                    f"std::ostream &operator<<(std::ostream &s, const EventAndID<{ename}> &);\n\n"
+                )
 
                 ###
                 ## The trace itself
-                name = name.replace("TraceTy", "Trace")
-                wr(f"class {name} : public Trace<{ename}> {{\n")
+                if tracety.is_stdout():
+                    superclass = f"StdoutTrace<{ename}>"
+                else:
+                    superclass = f"Trace<{ename}>"
+
+                wr(f"class {name} : public {superclass} {{\n")
+                wr("public:\n")
+                tid = int(name[name.find("_") + 1 :])
+                wr(f"  constexpr static size_t TYPE_ID = {tid};\n\n")
+                wr(f"  {name}(size_t id) : {superclass}(id, {tid}) {{}}\n")
                 wr("};\n\n")
-
-            # wr(
-            #    "  bool operator==(const AnyEvent &rhs) const {\n"
-            #    "    if (kind() != rhs.kind()) return false;\n"
-            #    "    switch (kind()) {\n"
-            #    "      case (vms_kind)Kind::END: return true;\n"
-            # )
-            # for event in events:
-            #    sname = event.name.name
-            #    wr(
-            #        f"      case (vms_kind)Kind::{sname}: return data.{sname} == rhs.data.{sname};\n"
-            #    )
-            # wr(f"      default: abort();\n")
-            # wr("    }\n  }\n\n")
-
-            # wr(
-            #    "  bool operator!=(const TraceEvent &rhs) const { return !operator==(rhs); }\n"
-            # )
-
-            # if self.args.debug:
-            #    wr(
-            #        "#include <iostream>\n"
-            #        "std::ostream &operator<<(std::ostream &s, const TraceEvent &ev);\n\n"
-            #    )
 
             wr("#endif")
 
-    def _events_cpp_begin(self, wr):
+    def _cpp_begin(self, wr):
         wr(
             "#include <cassert>\n\n"
             '#include "events.h"\n\n'
-            "#ifdef DBG\n"
-            "#include <iomanip>\n"
+            '#include "traces.h"\n\n'
             "#include <iostream>\n\n"
             'static const char *color_green = "\033[0;32m";\n'
             'static const char *color_red = "\033[0;31m";\n'
             'static const char *color_reset = "\033[0m";\n\n'
         )
 
-    def _gen_cpp(self, tracetypes, events):
+    def _gen_cpp(self, tracetypes):
         with self.new_file("traces.cpp") as f:
             wr = f.write
 
-            self._events_cpp_begin(wr)
+            self._cpp_begin(wr)
 
-            wr(
-                "std::ostream &operator<<(std::ostream &s, const TraceEvent &ev) {\n"
-                '  s << "TraceEvent(" << color_green << std::setw(7) << std::left;\n'
-            )
+            for ty, tracety in tracetypes.items():
+                name = tracety.name
+                ###
+                ## Event in the trace `name`
+                ename = f"Event_{name}"
 
-            wr("  switch((Kind)ev.kind()) {\n")
-            wr(
-                '    case Kind::END: s << "END" << color_reset'
-                '                      << ", " << color_red << std::setw(2) << std::right << ev.id() << color_reset;\n'
-                "      break;\n"
-            )
-            for event in events:
                 wr(
-                    f"    case Kind::{event.name.name}:\n"
-                    f'      s << "{event.name.name}"\n'
-                    '         << color_reset << ", " << color_red << std::setw(2)'
-                    " << std::right << ev.id() << color_reset;\n"
+                    f"std::ostream &operator<<(std::ostream &s, const {ename} &ev) {{\n"
+                    f'  s << "{name}::";\n'
                 )
 
-                if not event.fields:
-                    continue
-                for n, field in enumerate(event.fields):
-                    wr(f'      s << ", ";\n')
+                wr("  switch((Kind)ev.kind()) {\n")
+
+                for event_ty in ty.subtypes:
+                    sname = event_ty.name
+                    wr(f"    case Kind::{sname}:\n" f"     s << ev.{sname}; break;\n")
+                wr('    default: assert(false && "Invalid kind"); abort(); \n')
+                wr("  }\n")
+
+                wr("  return s;\n")
+                wr("}\n\n")
+
+                ### operator<< with EventAndID
+                wr(
+                    f"std::ostream &operator<<(std::ostream &s, const EventAndID<{ename}>& data) {{\n"
+                    f'  s << "{name}::";\n'
+                )
+
+                wr("  switch((Kind)data.event.kind()) {\n")
+
+                for event_ty in ty.subtypes:
+                    sname = event_ty.name
                     wr(
-                        f'      s << "{field.name.name}=" << ev.data.{event.name.name}.{field.name.name};\n'
+                        f"    case Kind::{sname}:\n"
+                        f"     s << EventAndID<Event_{sname}>(data.event.{sname}, data.id); break;\n"
                     )
-                wr(f"      break;\n")
+                wr('    default: assert(false && "Invalid kind"); abort(); \n')
+                wr("  }\n")
 
-            wr('    default: s << "??"; assert(false && "Invalid kind"); break;\n')
-            wr("  }\n")
-
-            wr('  s << ")";\n\n')
-
-            wr("  return s;\n")
-            wr("}\n\n")
-            wr("#endif\n")
+                wr("  return s;\n")
+                wr("}\n\n")

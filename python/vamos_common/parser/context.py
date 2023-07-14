@@ -1,6 +1,15 @@
 from ..spec.ir.identifier import Identifier
 
 
+class NewTraceSpec:
+    def __init__(self, name, outputs):
+        self.name = name
+        self.outputs = outputs
+
+    def is_stdout(self):
+        return "stdout" in self.outputs
+
+
 class Context:
     def __init__(self):
         self.decls = {}
@@ -22,7 +31,7 @@ class Context:
         assert name not in self._modules, (name, self._modules)
         self._modules[name] = mod
 
-    def add_tracetype(self, ty):
+    def add_tracetype(self, ty, outputs):
         """
         Generate the name for trace type. Same (compatible) trace types have the same name
         (as determined by the __eq__ method on TraceType class).
@@ -30,7 +39,7 @@ class Context:
         :return: str with a name of the trace.
         """
         if not ty in self.tracetypes:
-            self.tracetypes[ty] = f"TraceTy_{len(self.tracetypes)}"
+            self.tracetypes[ty] = NewTraceSpec(f"Trace_{len(self.tracetypes)}", outputs)
 
         return self.tracetypes[ty]
 
