@@ -7,10 +7,20 @@ class Context:
         self.eventdecls = {}
         self.usertypes = {}
         self.tracetypes = {}
+        # mapping of identifiers and elements in general to types
+        self.types = {}
+        self._modules = {}
 
         # self.decls = ctx.get('decls') if ctx else {}
         # self.eventdecls = ctx.get('eventdecls') if ctx else {}
         # self.usertypes = ctx.get('usertypes') if ctx else {}
+
+    def add_module(self, name, mod):
+        if isinstance(name, Identifier):
+            name = name.name
+        assert isinstance(name, str), name
+        assert name not in self._modules, (name, self._modules)
+        self._modules[name] = mod
 
     def add_tracetype(self, ty):
         """
@@ -47,6 +57,24 @@ class Context:
             name = name.name
         assert isinstance(name, str), (name, type(name))
         return self.eventdecls.get(name)
+
+    def alphabet(self):
+        return list(self.eventdecls.values())
+
+    def get_module(self, name):
+        if isinstance(name, Identifier):
+            name = name.name
+        return self._modules.get(name)
+
+    def get_method(self, mod, name):
+        if isinstance(name, Identifier):
+            name = name.name
+        if isinstance(mod, (str, Identifier)):
+            mod = self.get_module(mod)
+
+        assert mod is not None, (name, self._modules)
+        assert isinstance(name, str)
+        return mod.METHODS[name]
 
     def dump(self):
         print(self, ":")

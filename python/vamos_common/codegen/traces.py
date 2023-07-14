@@ -11,7 +11,7 @@ class CodeGenCpp(CodeGen):
         # self._gen_cpp(tracetypes, events)
 
     def _gen_h(self, tracetypes, eventdecls):
-        name_to_ev = {ev.name.name: ev for ev in eventdecls}
+        # name_to_ev = {ev.name.name: ev for ev in eventdecls}
 
         with self.new_file("traces.h") as f:
             wr = f.write
@@ -20,6 +20,8 @@ class CodeGenCpp(CodeGen):
             wr("using vamos::Event;\n\n")
 
             for ty, name in tracetypes.items():
+                ###
+                ## Event in the trace `name`
                 ename = f"Event_{name}"
                 wr(f"union {ename} {{\n")
                 wr("  Event base;\n")
@@ -28,15 +30,21 @@ class CodeGenCpp(CodeGen):
                     wr(f"  Event_{sname} {sname};\n")
                 wr("\n")
 
-                wr(f"  {ename}() : Event() {{}}\n")
+                wr(f"  {ename}() : base() {{}}\n")
                 for event_ty in ty.subtypes:
                     sname = event_ty.name
                     wr(f"  {ename}(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
 
                 wr(
-                    "\n  template <Kind k> bool isa() const { return base.kind() == k; }\n"
+                    "\n  template <Kind k> bool isa() const { return base.kind() == (vms_kind)k; }\n"
                 )
 
+                wr("};\n\n")
+
+                ###
+                ## The trace itself
+                name = name.replace("TraceTy", "Trace")
+                wr(f"class {name} : public Trace<{ename}> {{\n")
                 wr("};\n\n")
 
             # wr(

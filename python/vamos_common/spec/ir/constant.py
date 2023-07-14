@@ -18,6 +18,12 @@ class Constant(Expr):
     def __eq__(self, other):
         return self.value == other.value
 
+    def __hash__(self):
+        return hash(self.__repr__())
+
     @property
     def children(self):
         return ()
+
+    def typing_rule(self, types):
+        types.assign(self, self.type())

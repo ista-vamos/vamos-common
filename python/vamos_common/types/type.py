@@ -5,8 +5,14 @@ class Type:
     def children(self):
         raise NotImplementedError(f"Must be overriden for {self}")
 
+    def unify(self, other):
+        raise NotImplementedError(f"Must be overriden for {self}")
+
     def __eq__(self, other):
         return isinstance(other, type(self))
+
+    def __hash__(self):
+        return hash(self.__repr__())
 
     def get_method(self, name: str):
         assert isinstance(name, str), name
@@ -32,6 +38,11 @@ class UserType(Type):
     def children(self):
         return ()
 
+    def unify(self, other):
+        if self != other:
+            raise NotImplementedError(f"{self} cannot by unified with {other}")
+        return self
+
 
 class EventType(UserType):
     def __str__(self):
@@ -40,11 +51,27 @@ class EventType(UserType):
     def __repr__(self):
         return f"EventType({self.name})"
 
+    def __eq__(self, other):
+        return isinstance(other, EventType) and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.__repr__())
+
+    def unify(self, other):
+        if self != other:
+            raise NotImplementedError(f"{self} cannot by unified with {other}")
+        return self
+
 
 class SimpleType(Type):
     @property
     def children(self):
         return ()
+
+    def unify(self, other):
+        if not isinstance(other, BoolType):
+            raise NotImplementedError(f"{self} cannot by unified with {other}")
+        return self
 
 
 class BoolType(SimpleType):
@@ -69,6 +96,13 @@ class NumType(SimpleType):
             return "Num"
         return f"Num{self.bitwidth}"
 
+    def unify(self, other):
+        if issubclass(type(other), NumType):
+            return other
+        elif isinstance(other, NumType):
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
+
 
 class IntType(NumType):
     def __init__(self, bitwidth):
@@ -77,6 +111,11 @@ class IntType(NumType):
 
     def __str__(self):
         return f"Int{self.bitwidth}"
+
+    def unify(self, other):
+        if type(other) == NumType or self == other:
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
 class UIntType(NumType):
@@ -87,14 +126,33 @@ class UIntType(NumType):
     def __str__(self):
         return f"UInt{self.bitwidth}"
 
+    def unify(self, other):
+        if type(other) == NumType or self == other:
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
+
 
 class IteratorType(Type):
+    def __init__(self, elem_ty):
+        self._elem_ty = elem_ty
+
+    def __eq__(self, other):
+        return isinstance(other, IteratorType) and self._elem_ty == other._elem_ty
+
+    def __repr__(self):
+        return f"IteratorTy({self._elem_ty})"
+
+    def elem_ty(self):
+        return self._elem_ty
+
     @property
     def children(self):
         return ()
 
-
-ITERATOR_TYPE = IteratorType()
+    def unify(self, other):
+        if isinstance(other, IteratorType):
+            return IteratorType(self.elem_ty().unify(other.elem_ty()))
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
 class OutputType(Type):
@@ -137,6 +195,11 @@ class TraceType(IterableType):
     def children(self):
         return self.subtypes
 
+    def unify(self, other):
+        if self == other:
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
+
 
 class HypertraceType(IterableType):
     def __init__(self, subtypes, bounded=True):
@@ -160,6 +223,11 @@ class HypertraceType(IterableType):
     @property
     def children(self):
         return self.subtypes
+
+    def unify(self, other):
+        if self == other:
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
 def int_type_from_token(token):

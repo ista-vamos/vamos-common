@@ -53,19 +53,19 @@ class CodeGenCpp(CodeGen):
                 wr(";\n  }\n")
                 wr(f"}};\n\n")
 
-            wr("union AnyEvent {\n")
-            wr("  Event base;\n")
-            for event in events:
-                sname = event.name.name
-                wr(f"  Event_{sname} {sname};\n")
+            # wr("union AnyEvent {\n")
+            # wr("  Event base;\n")
+            # for event in events:
+            #    sname = event.name.name
+            #    wr(f"  Event_{sname} {sname};\n")
 
-            wr("\n")
-            wr("  AnyEvent() : Event() ;\n")
-            for event in events:
-                sname = event.name.name
-                wr(f"  AnyEvent(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
+            # wr("\n")
+            # wr("  AnyEvent() : base() {}\n")
+            # for event in events:
+            #    sname = event.name.name
+            #    wr(f"  AnyEvent(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
 
-            wr("\n  template <Kind k> bool isa() const { return base.kind() == k; }\n")
+            # wr("\n  template <Kind k> bool isa() const { return base.kind() == (vms_kind)k; }\n")
 
             # wr(
             #    "  bool operator==(const AnyEvent &rhs) const {\n"
@@ -84,7 +84,7 @@ class CodeGenCpp(CodeGen):
             # wr(
             #    "  bool operator!=(const TraceEvent &rhs) const { return !operator==(rhs); }\n"
             # )
-            wr("};\n\n")
+            # wr("};\n\n")
 
             # if self.args.debug:
             #    wr(
