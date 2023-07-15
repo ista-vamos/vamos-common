@@ -22,6 +22,9 @@ class TypeCheckerProxy:
     def visit(self, node):
         self._typechecker.visit(node)
 
+    def get_method(self, obj, name):
+        return self._typechecker.get_method(obj, name)
+
     def dump(self):
         for i, t in self._typechecker.types().items():
             print(":: ", i, ": ", t)
@@ -36,6 +39,22 @@ class TypeChecker:
 
     def get(self, elem):
         return self._types.get(elem)
+
+    def get_method(self, obj, name):
+        method = self._ctx.get_method(obj, name)
+        if method:
+            return method
+
+        # this method is not from a module, but from a type
+        # TODO: add ModuleType and unify the way we approach methods
+        # from objects and modules
+        ty = self.get(obj)
+        if ty is not None:
+            if isinstance(name, Identifier):
+                name = name.name
+            return ty.get_method(name)
+
+        return None
 
     def assign(self, elem, ty):
         print("\033[36;1m[TC] assign", elem, "~>", ty, "\033[0m")

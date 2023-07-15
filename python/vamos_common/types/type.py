@@ -15,8 +15,11 @@ class Type:
         return hash(self.__repr__())
 
     def get_method(self, name: str):
+        """Get the header of a type-associated method"""
         assert isinstance(name, str), name
-        return type(self).methods.get(name)
+        if name not in type(self).methods:
+            raise RuntimeError(f"`{self}` has no method `{name}`")
+        return type(self).methods[name]
 
 
 class UserType(Type):
@@ -293,6 +296,11 @@ class StringType(IterableType):
     @property
     def children(self):
         return ()
+
+    def unify(self, other):
+        if type(self) == type(other):
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
 STRING_TYPE = StringType()

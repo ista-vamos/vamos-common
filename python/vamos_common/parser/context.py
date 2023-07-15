@@ -78,20 +78,31 @@ class Context:
             name = name.name
         return self._modules.get(name)
 
-    def get_method(self, mod, name):
+    def get_method(self, obj, name):
+        """Get the header (not the implementation!) of the method `obj.name`"""
         if isinstance(name, Identifier):
             name = name.name
-        if isinstance(mod, (str, Identifier)):
-            mod = self.get_module(mod)
-
-        assert mod is not None, (name, self._modules)
         assert isinstance(name, str)
-        return mod.METHODS[name]
+
+        if isinstance(obj, (str, Identifier)):
+            mod = self.get_module(obj)
+
+        if mod is None:
+            # not a method of a module, but of a type
+            if self._typechecker:
+                ty = self.get_type(obj)
+                if ty is not None:
+                    return ty.get_method(name)
+        else:
+            return mod.METHODS[name].header
+
+        return None
 
     def get_type(self, elem):
         if self._typechecker is None:
             print(
-                f"WARNING: {__name__} called without running type-checker", file=stderr
+                f"WARNING: {__name__}.get_type() called without running type-checker",
+                file=stderr,
             )
         return self.types.get(elem)
 
