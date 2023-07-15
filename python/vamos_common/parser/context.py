@@ -1,4 +1,5 @@
 from ..spec.ir.identifier import Identifier
+from sys import stderr
 
 
 class NewTraceSpec:
@@ -19,6 +20,8 @@ class Context:
         # mapping of identifiers and elements in general to types
         self.types = {}
         self._modules = {}
+
+        self._typechecker = None
 
         # self.decls = ctx.get('decls') if ctx else {}
         # self.eventdecls = ctx.get('eventdecls') if ctx else {}
@@ -84,6 +87,17 @@ class Context:
         assert mod is not None, (name, self._modules)
         assert isinstance(name, str)
         return mod.METHODS[name]
+
+    def get_type(self, elem):
+        if self._typechecker is None:
+            print(
+                f"WARNING: {__name__} called without running type-checker", file=stderr
+            )
+        return self.types.get(elem)
+
+    def add_typecheck_results(self, typechecker):
+        self._typechecker = typechecker
+        self.types = typechecker.types()
 
     def dump(self):
         print(self, ":")
