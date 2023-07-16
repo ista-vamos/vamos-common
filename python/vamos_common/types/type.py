@@ -1,4 +1,8 @@
 class Type:
+    """
+    A type of elements in the specification
+    """
+
     methods = {}
 
     @property
@@ -21,12 +25,41 @@ class Type:
             raise RuntimeError(f"`{self}` has no method `{name}`")
         return type(self).methods[name]
 
+    def is_user(self):
+        "Is this a user-defined type?"
+        return False
+
+    def is_event(self):
+        return False
+
+    def is_bool(self):
+        return False
+
+    def is_num(self):
+        return False
+
+    def is_int(self):
+        return False
+
+    def is_uint(self):
+        return False
+
+    def is_string(self):
+        return False
+
 
 class UserType(Type):
+    """
+    A type defined by the user, e.g. and event
+    """
+
     def __init__(self, name):
         super().__init__()
         assert isinstance(name, str), name
         self.name = name
+
+    def is_user(self):
+        return True
 
     def __str__(self):
         return f"uTYPE({self.name})"
@@ -48,6 +81,9 @@ class UserType(Type):
 
 
 class EventType(UserType):
+    def is_event(self):
+        return True
+
     def __str__(self):
         return f"EventTy({self.name})"
 
@@ -81,6 +117,9 @@ class BoolType(SimpleType):
     def __str__(self):
         return "Bool"
 
+    def is_bool(self):
+        return True
+
 
 BOOL_TYPE = BoolType()
 
@@ -90,6 +129,9 @@ class NumType(SimpleType):
         super().__init__()
         assert bitwidth is None or bitwidth in (8, 16, 32, 64), bitwidth
         self.bitwidth = bitwidth
+
+    def is_num(self):
+        return True
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.bitwidth == other.bitwidth
@@ -115,6 +157,9 @@ class IntType(NumType):
         super().__init__(bitwidth)
         self.signed = True
 
+    def is_int(self):
+        return True
+
     def __str__(self):
         return f"Int{self.bitwidth}"
 
@@ -128,6 +173,9 @@ class UIntType(NumType):
     def __init__(self, bitwidth):
         super().__init__(bitwidth)
         self.signed = False
+
+    def is_uint(self):
+        return True
 
     def __str__(self):
         return f"UInt{self.bitwidth}"
@@ -161,31 +209,79 @@ class IteratorType(Type):
         raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
-class OutputType(Type):
-    """
-    Type of object that serve as output of traces
-    """
-
-    @property
-    def children(self):
-        return ()
-
-
 class IterableType(Type):
+    """
+    A type whose objects we can iterate via an iterator.
+    """
+
+    def __init__(self, iterator_type):
+        assert isinstance(iterator_type, IteratorType), iterator_type
+        self._iterator_type = iterator_type
+
     def iterator_type(self):
-        raise
+        return self._iterator_type
+
+    @property
+    def children(self):
+        return ()
+
+    def unify(self, other):
+        if (
+            isinstance(other, IterableType)
+            and self._iterator_type == other._iterator_type
+        ):
+            if issubclass(type(other), type(self)):
+                return other
+            return self
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
+
+
+class StringType(IterableType):
+    methods = {}
+
+    def __init__(self):
+        super().__init__(IteratorType(UIntType(8)))
+
+    def is_string(self):
+        return True
+
+    def __repr__(self):
+        return "StringTy"
 
     @property
     def children(self):
         return ()
 
 
-ITERABLE_TYPE = IterableType()
+# def unify(self, other):
+#    if type(self) == type(other):
+#        return self
+#    raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
-class TraceType(IterableType):
+STRING_TYPE = StringType()
+
+
+class MultiType(Type):
+    """
+    Type that (may) consists of multiple types, e.g., a tuple or a trace of events
+    """
+
     def __init__(self, subtypes):
         super().__init__()
+        assert all(
+            map(lambda ty: isinstance(ty, (SimpleType, UserType)), subtypes)
+        ), subtypes
+        self._subtypes = subtypes
+
+    @property
+    def children(self):
+        return self._subtypes
+
+
+class TraceType(MultiType):
+    def __init__(self, subtypes):
+        super().__init__(subtypes)
         assert all(
             map(lambda ty: isinstance(ty, (SimpleType, UserType)), subtypes)
         ), subtypes
@@ -210,9 +306,9 @@ class TraceType(IterableType):
         raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
-class HypertraceType(IterableType):
+class HypertraceType(MultiType):
     def __init__(self, subtypes, bounded=True):
-        super().__init__()
+        super().__init__(subtypes)
         assert all(
             map(lambda ty: isinstance(ty, (TraceType, UserType)), subtypes)
         ), subtypes
@@ -237,6 +333,14 @@ class HypertraceType(IterableType):
         if self == other:
             return self
         raise NotImplementedError(f"{self} cannot by unified with {other}")
+
+
+class TupleType(MultiType):
+    def __init__(self, elems_tys):
+        super().__init__(elems_tys)
+
+    def __repr__(self):
+        return f"TupleTy({', '.join(map(str, self._subtypes))})"
 
 
 def int_type_from_token(token):
@@ -265,37 +369,6 @@ def uint_type_from_token(token):
     raise NotImplementedError(f"Invalid type: {token}")
 
 
-class TupleType(IterableType):
-    def __init__(self, elems_tys):
-        super().__init__()
-        self.subtypes = elems_tys
-
-    def __repr__(self):
-        return f"TupleTy({', '.join(map(str, self.subtypes))})"
-
-
-class StringType(IterableType):
-    methods = {}
-
-    def __init__(self):
-        super().__init__()
-
-    def __repr__(self):
-        return "StringTy"
-
-    @property
-    def children(self):
-        return ()
-
-    def unify(self, other):
-        if type(self) == type(other):
-            return self
-        raise NotImplementedError(f"{self} cannot by unified with {other}")
-
-
-STRING_TYPE = StringType()
-
-
 class ObjectType(Type):
     def __repr__(self):
         return "ObjectTy"
@@ -306,6 +379,16 @@ class ObjectType(Type):
 
 
 OBJECT_TYPE = ObjectType()
+
+
+class OutputType(Type):
+    """
+    Type of object that serve as output of traces
+    """
+
+    @property
+    def children(self):
+        return ()
 
 
 def type_from_token(token):
