@@ -1,6 +1,8 @@
 from .codegen import CodeGen
 from .lang.cpp import cpp_type
 
+from vamos_common.types.type import StringType
+
 
 class CodeGenCpp(CodeGen):
     def __init__(self, args, ctx):
@@ -111,9 +113,14 @@ class CodeGenCpp(CodeGen):
         else:
             wr(f'  s << ", ";\n')
             for n, field in enumerate(event.fields):
-                if n > 1:
+                if n > 0:
                     wr(f'  s << ", ";\n')
-                wr(f'  s << "{field.name.name}=" << ev.{field.name.name};\n')
+                if isinstance(field.type(), StringType):
+                    wr(
+                        f'  s << "{field.name.name}=\\"" << ev.{field.name.name} << "\\"";\n'
+                    )
+                else:
+                    wr(f'  s << "{field.name.name}=" << ev.{field.name.name};\n')
             wr('  s << ")";\n\n')
         wr("  return s;\n")
 

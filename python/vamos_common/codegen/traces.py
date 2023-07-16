@@ -39,6 +39,16 @@ class CodeGenCpp(CodeGen):
                     sname = event_ty.name
                     wr(f"  {ename}(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
 
+                wr(f"  ~{ename}() {{\n" "     switch(base.kind()) {\n")
+                for event_ty in ty.subtypes:
+                    sname = event_ty.name
+                    wr(
+                        f"     case (vms_kind)Kind::{sname}: {sname}.~Event_{sname}(); break;\n"
+                    )
+                wr(f"     default: abort();\n")
+                wr("      }\n")
+                wr("  }\n")
+
                 wr(
                     "\n  template <Kind k> bool isa() const { return base.kind() == (vms_kind)k; }\n"
                 )

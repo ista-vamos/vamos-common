@@ -172,6 +172,9 @@ class OutputType(Type):
 
 
 class IterableType(Type):
+    def iterator_type(self):
+        raise
+
     @property
     def children(self):
         return ()
@@ -262,19 +265,6 @@ def uint_type_from_token(token):
     raise NotImplementedError(f"Invalid type: {token}")
 
 
-def type_from_token(token):
-    if token == "Bool":
-        return BoolType()
-
-    if token.startswith("Int"):
-        return int_type_from_token(token)
-
-    if token.startswith("UInt"):
-        return uint_type_from_token(token)
-
-    raise NotImplementedError(f"Unknown type: {token}")
-
-
 class TupleType(IterableType):
     def __init__(self, elems_tys):
         super().__init__()
@@ -316,3 +306,19 @@ class ObjectType(Type):
 
 
 OBJECT_TYPE = ObjectType()
+
+
+def type_from_token(token):
+    if token == "Bool":
+        return BoolType()
+
+    if token.startswith("Int"):
+        return int_type_from_token(token)
+
+    if token.startswith("UInt"):
+        return uint_type_from_token(token)
+
+    if token == "String":
+        return STRING_TYPE
+
+    raise NotImplementedError(f"Unknown type: {token}")

@@ -1,4 +1,12 @@
-from ...types.type import Type, BoolType, IntType, UIntType, NumType, EventType
+from ...types.type import (
+    Type,
+    BoolType,
+    IntType,
+    UIntType,
+    NumType,
+    EventType,
+    StringType,
+)
 
 
 def cpp_type(ty: Type):
@@ -13,4 +21,6 @@ def cpp_type(ty: Type):
         return "int"
     if isinstance(ty, EventType):
         return f"Event_{ty.name}"
+    if isinstance(ty, StringType):
+        return f"std::string"
     raise NotImplementedError(f"Unknown type: {ty}")
