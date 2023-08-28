@@ -269,9 +269,6 @@ class MultiType(Type):
 
     def __init__(self, subtypes):
         super().__init__()
-        assert all(
-            map(lambda ty: isinstance(ty, (SimpleType, UserType)), subtypes)
-        ), subtypes
         self._subtypes = subtypes
 
     @property
@@ -309,10 +306,8 @@ class TraceType(MultiType):
 class HypertraceType(MultiType):
     def __init__(self, subtypes, bounded=True):
         super().__init__(subtypes)
-        assert all(
-            map(lambda ty: isinstance(ty, (TraceType, UserType)), subtypes)
-        ), subtypes
-        self.subtypes = subtypes
+        assert all(map(lambda ty: isinstance(ty, TraceType), subtypes)), subtypes
+        self.subtypes = set(subtypes)
         self.bounded = bounded
 
     def __str__(self):
@@ -324,6 +319,9 @@ class HypertraceType(MultiType):
             and self.subtypes == other.subtypes
             and self.bounded == other.bounded
         )
+
+    def __hash__(self):
+        return hash(str(self))
 
     @property
     def children(self):

@@ -17,6 +17,7 @@ class Context:
         self.eventdecls = {}
         self.usertypes = {}
         self.tracetypes = {}
+        self.hypertracetypes = {}
         # mapping of identifiers and elements in general to types
         self.types = {}
         self._modules = {}
@@ -48,6 +49,22 @@ class Context:
 
     def get_tracetype(self, ty):
         return self.tracetypes.get(ty)
+
+    def add_hypertracetype(self, ty, outputs):
+        """
+        Generate the name for hypertrace type. Same (compatible) hypertrace types have the same name
+        (as determined by the __eq__ method on TraceType class).
+
+        :return: str with a name of the hypertrace.
+        """
+        if not ty in self.hypertracetypes:
+            self.hypertracetypes[ty] = NewTraceSpec(f"HTrace_{len(self.hypertracetypes)}", outputs)
+
+        return self.hypertracetypes[ty]
+
+    def get_hypertracetype(self, ty):
+        return self.hypertracetypes.get(ty)
+
 
     def add_eventdecl(self, *decls):
         for decl in decls:
