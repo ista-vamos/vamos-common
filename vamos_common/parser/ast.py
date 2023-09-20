@@ -113,9 +113,7 @@ class ProcessExpr(BaseTransformer):
 
     def _compare(self, comp, items):
         assert len(items) == 2, items
-        return CompareExpr(
-            comp, identifier_or_expr(items[0]), identifier_or_expr(items[1])
-        )
+        return CompareExpr(comp, items[0], items[1])
 
     def eq(self, items):
         return self._compare("==", items)

@@ -47,7 +47,7 @@ class CodeGenCpp(CodeGen):
             sname = event_ty.name
             wr(f"  {ename}(const Event_{sname}& ev) : {sname}(ev) {{}}\n")
 
-        wr(f"  ~{ename}() {{\n" "     switch(base.kind()) {\n")
+        wr(f"  ~{ename}() {{\n" "     switch(base.get_kind()) {\n")
         for event_ty in ty.subtypes:
             sname = event_ty.name
             wr(
@@ -58,11 +58,11 @@ class CodeGenCpp(CodeGen):
         wr("  }\n")
 
         wr(
-            "\n  template <Kind k> bool isa() const { return base.kind() == (vms_kind)k; }\n"
+            "\n  template <Kind k> bool isa() const { return base.get_kind() == (vms_kind)k; }\n"
         )
         wr(f"  void set_id(vms_eventid id) {{ base.set_id(id); }}\n")
-        wr(f"  vms_eventid id() const {{ return base.id(); }}\n")
-        wr(f"  vms_kind kind() const {{ return base.kind(); }}\n")
+        wr(f"  vms_eventid id() const {{ return base.get_id(); }}\n")
+        wr(f"  vms_kind kind() const {{ return base.get_kind(); }}\n")
 
         wr("};\n\n")
 

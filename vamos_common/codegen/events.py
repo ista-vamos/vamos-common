@@ -134,7 +134,7 @@ class CodeGenCpp(CodeGen):
                 sname = event.name.name
                 ename = f"Event_{sname}"
                 wr(f"std::ostream &operator<<(std::ostream &s, const {ename} &ev) {{\n")
-                self._gen_print_event(wr, event, "ev.id()")
+                self._gen_print_event(wr, event, "ev.get_id()")
                 wr("}\n\n")
 
                 wr(

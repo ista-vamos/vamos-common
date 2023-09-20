@@ -65,11 +65,11 @@ class TypeChecker:
                 self._types[elem] = None
             return False
 
-        changed = False
         cur_ty = self._types.get(elem)
         if cur_ty:
             print(">> ", cur_ty, ty)
             new_ty = cur_ty.unify(ty)
+            print("new >> ", new_ty)
             changed = new_ty != cur_ty
             self._changed = changed
             self._types[elem] = new_ty

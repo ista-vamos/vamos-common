@@ -160,7 +160,7 @@ class IntType(NumType):
     def is_int(self):
         return True
 
-    def __str__(self):
+    def __repr__(self):
         return f"Int{self.bitwidth}"
 
     def unify(self, other):
@@ -196,7 +196,24 @@ class IteratorType(Type):
     def __repr__(self):
         return f"IteratorTy({self._elem_ty})"
 
+    def has_fixed_len(self):
+        return False
+
+    def len(self):
+        return None
+
+    def is_tuple(self):
+        return False
+
+    def has_single_element(self):
+        """
+        Return True if this type of iterator iterates over a single type
+        of element only. The default is True.
+        """
+        return True
+
     def elem_ty(self):
+        assert isinstance(self._elem_ty, Type), self._elem_ty
         return self._elem_ty
 
     @property
@@ -206,6 +223,56 @@ class IteratorType(Type):
     def unify(self, other):
         if isinstance(other, IteratorType):
             return IteratorType(self.elem_ty().unify(other.elem_ty()))
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
+
+
+class TupleIteratorType(IteratorType):
+    def __init__(self, elems_ty):
+        if not isinstance(elems_ty, list):
+            assert isinstance(elems_ty, tuple), elems_ty
+            assert isinstance(elems_ty[0], Type), elems_ty
+            assert isinstance(elems_ty[1], int), elems_ty
+            elems_ty = [elems_ty[0]] * elems_ty[1]
+        assert isinstance(elems_ty, list), elems_ty
+        assert all((isinstance(ty, Type) for ty in elems_ty)), elems_ty
+        super().__init__(elems_ty)
+
+    def __eq__(self, other):
+        return isinstance(other, TupleIteratorType) and self._elem_ty == other._elem_ty
+
+    def __repr__(self):
+        return f"TupleIteratorTy({self.elems_ty()})"
+
+    def has_fixed_len(self):
+        return True
+
+    def len(self):
+        return len(self.elems_ty())
+
+    def is_tuple(self):
+        return True
+
+    def has_single_element(self):
+        tys = self.elems_ty()
+        return all((ty == tys[0] for ty in tys))
+
+    def elem_ty(self):
+        if self.has_single_element():
+            assert isinstance(self._elem_ty, list), self._elem_ty
+            return self.elems_ty()[0]
+
+    def elems_ty(self):
+        return self._elem_ty
+
+    @property
+    def children(self):
+        return ()
+
+    def unify(self, other):
+        if isinstance(other, TupleIteratorType):
+            return TupleIteratorType(
+                [ty.unify(ty2) for ty, ty2 in zip(self.elems_ty(), other.elems_ty())]
+            )
         raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
@@ -271,6 +338,9 @@ class MultiType(Type):
         super().__init__()
         self._subtypes = subtypes
 
+    def subtypes(self):
+        return self._subtypes
+
     @property
     def children(self):
         return self._subtypes
@@ -335,10 +405,21 @@ class HypertraceType(MultiType):
 
 class TupleType(MultiType):
     def __init__(self, elems_tys):
+        assert isinstance(elems_tys, list), "The types for tuple must be ordered"
         super().__init__(elems_tys)
+
+    def iterator_type(self):
+        return TupleIteratorType(self.subtypes())
 
     def __repr__(self):
         return f"TupleTy({', '.join(map(str, self._subtypes))})"
+
+    def unify(self, other):
+        if isinstance(other, TupleType):
+            return TupleType(
+                [ty.unify(ty2) for ty, ty2 in zip(self.subtypes(), other.subtypes())]
+            )
+        raise NotImplementedError(f"{self} cannot by unified with {other}")
 
 
 def int_type_from_token(token):

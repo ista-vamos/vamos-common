@@ -1,7 +1,9 @@
 from vamos_common.types.type import (
     EventType,
+    TupleType,
     STRING_TYPE,
     BOOL_TYPE,
+    TupleIteratorType,
 )
 
 from ..ir.element import Element
@@ -15,7 +17,7 @@ class Expr(Element):
 
 class TupleExpr(Expr):
     def __init__(self, vals, ty):
-        super().__init__(ty)
+        super().__init__(TupleType([v.type() for v in vals]))
         self.values = vals
 
     def __repr__(self):
@@ -24,6 +26,12 @@ class TupleExpr(Expr):
     @property
     def children(self):
         return self.values
+
+    def typing_rule(self, types):
+        types.assign(self, self.type())
+
+    def iterator_type(self):
+        return TupleIteratorType(self.type().subtypes())
 
 
 class Cast(Expr):
@@ -175,10 +183,18 @@ class IsIn(BoolExpr):
 
     def typing_rule(self, types):
         types.assign(self, BOOL_TYPE)
-        types.assign(self.lhs, self.rhs.iterator_type().elem_type())
+        iterator_type = self.rhs.iterator_type()
+        if not iterator_type.has_single_element():
+            raise RuntimeError(
+                f"{self} cannot by assigned a type from with {iterator_type}"
+            )
+        types.assign(self.lhs, iterator_type.elem_ty())
         lhs_ty = types.get(self.lhs)
         if lhs_ty:
-            types.assign(self.rhs, IterableType(IteratorType(lhs_ty)))
+            if iterator_type.is_tuple():
+                types.assign(self.rhs, TupleType([lhs_ty] * iterator_type.len()))
+            else:
+                types.assign(self.rhs, IterableType(type(iterator_type)(lhs_ty)))
 
 
 class Event(Expr):
