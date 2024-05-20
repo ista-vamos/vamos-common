@@ -2,7 +2,6 @@ from .codegen import CodeGen
 
 
 class CodeGenCpp(CodeGen):
-
     def generate(self, tracetypes, htracetypes, alphabet):
         self._gen_h(tracetypes, htracetypes)
         self._gen_cpp(tracetypes, htracetypes)
@@ -23,7 +22,6 @@ class CodeGenCpp(CodeGen):
 
             for ty, tracety in tracetypes.items():
                 self._gen_trace_ty(wr, ty, tracety)
-
 
             for ty, htracety in htracetypes.items():
                 self._gen_hypertrace_ty(wr, ty, htracety)
@@ -50,9 +48,7 @@ class CodeGenCpp(CodeGen):
         wr(f"  ~{ename}() {{\n" "     switch(base.get_kind()) {\n")
         for event_ty in ty.subtypes:
             sname = event_ty.name
-            wr(
-                f"     case (vms_kind)Kind::{sname}: {sname}.~Event_{sname}(); break;\n"
-            )
+            wr(f"     case (vms_kind)Kind::{sname}: {sname}.~Event_{sname}(); break;\n")
         wr(f"     default: abort();\n")
         wr("      }\n")
         wr("  }\n")
@@ -81,7 +77,7 @@ class CodeGenCpp(CodeGen):
 
         wr(f"class {name} : public {superclass} {{\n")
         wr("public:\n")
-        tid = int(name[name.find("_") + 1:])
+        tid = int(name[name.find("_") + 1 :])
         wr(f"  constexpr static size_t TYPE_ID = {tid};\n\n")
         wr(f"  {name}(size_t id) : {superclass}(id, {tid}) {{}}\n")
         wr("};\n\n")
@@ -92,7 +88,7 @@ class CodeGenCpp(CodeGen):
 
         wr(f"class {name} : public {superclass} {{\n")
         wr("public:\n")
-        tid = int(name[name.find("_") + 1:])
+        tid = int(name[name.find("_") + 1 :])
         wr(f"  constexpr static size_t TYPE_ID = {tid};\n\n")
         wr(f"  {name}(size_t id) : {superclass}(id, {tid}) {{}}\n")
         wr("};\n\n")

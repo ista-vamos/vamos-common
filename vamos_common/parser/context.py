@@ -58,13 +58,14 @@ class Context:
         :return: str with a name of the hypertrace.
         """
         if not ty in self.hypertracetypes:
-            self.hypertracetypes[ty] = NewTraceSpec(f"HTrace_{len(self.hypertracetypes)}", outputs)
+            self.hypertracetypes[ty] = NewTraceSpec(
+                f"HTrace_{len(self.hypertracetypes)}", outputs
+            )
 
         return self.hypertracetypes[ty]
 
     def get_hypertracetype(self, ty):
         return self.hypertracetypes.get(ty)
-
 
     def add_eventdecl(self, *decls):
         for decl in decls:
