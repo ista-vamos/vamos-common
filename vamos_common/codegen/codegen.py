@@ -68,7 +68,7 @@ class CodeGen:
         shutilcopy(path, self.out_dir)
 
     def new_file(self, name):
-        if name in self.args.overwrite_default:
+        if name in self.args.overwrite_file:
             filename = "/dev/null"
         else:
             filename = pathjoin(self.out_dir, name)
@@ -107,7 +107,7 @@ class CodeGen:
     #    If the callback is not a function but a string, the string is written into
     #    the stream instead.
     #    """
-    #    if outfile in self.args.overwrite_default:
+    #    if outfile in self.args.overwrite_file:
     #        return
     #    inpath = pathjoin(self.templates_path, infile)
     #    outpath = pathjoin(self.out_dir, outfile)
@@ -133,7 +133,7 @@ class CodeGen:
         and values is a dictionary mapping the keys into the values, e.g.:
         {"@A@": "value1", "@B" : "value2"}
         """
-        if outfile in self.args.overwrite_default:
+        if outfile in self.args.overwrite_file:
             return
         inpath = pathjoin(self.templates_path, infile)
         outpath = pathjoin(self.out_dir, outfile)
