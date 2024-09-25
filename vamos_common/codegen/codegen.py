@@ -31,20 +31,23 @@ class CodeGen:
             except OSError:
                 pass  # exists
 
-    def copy_file(self, name, to=None):
+    def copy_file(self, name: str, to: str = None, from_dir: str = None):
         """
-        Copy the file `name` into `out_dir`. If `name` is not a relative path,
-        it is looked for in `self.templates_path`.
+        Copy the file `name` into `out_dir`. If `name` is not an absolute path,
+        it is looked for in `from_dir` if given, otherwise in `self.templates_path`.
         If `to` is given, the file is copied into `out_dir/to`.
         (All the directories subsumed by `to` must exist)
         ```
-        in = name is relative ? templates_path/name : name
+        in = name is relative ? (from_dir ? from_dir : templates_path/name) : name
         out = to ? out_dir/to : out_dir
         cp in out
         ```
         """
-        print(name, to)
-        path = name if name[0] == "/" else pathjoin(self.templates_path, name)
+        if name[0] == "/":
+            path = name
+        else:
+            path = pathjoin(from_dir if from_dir else self.templates_path, name)
+
         if to:
             shutilcopy(path, f"{self.out_dir}/{to}")
         else:
