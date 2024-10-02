@@ -13,7 +13,7 @@ class CodeGen:
         self.ctx = ctx
 
         self._generated_files = []
-        self._key_re = re_compile("@(\S+?)@")
+        self._key_re = re_compile(r"@(\S+?)@")
 
         out_dir_overwrite = args.out_dir_overwrite
         print(
