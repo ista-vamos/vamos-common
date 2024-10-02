@@ -15,10 +15,9 @@ class CodeGenCpp(CodeGen):
             wr("#include <iostream>\n\n")
             wr('#include "trace.h"\n')
             wr('#include "htrace.h"\n')
+            wr('#include "event.h"\n')
             wr('#include "event_and_id.h"\n')
             wr('#include "stdout_trace.h"\n')
-            wr("#include <vamos-buffers/cpp/event.h>\n\n")
-            wr("using vamos::Event;\n\n")
 
             for ty, tracety in tracetypes.items():
                 self._gen_trace_ty(wr, ty, tracety)

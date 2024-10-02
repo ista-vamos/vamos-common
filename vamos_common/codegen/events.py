@@ -29,6 +29,7 @@ class CodeGenCpp(CodeGen):
                 wr("enum class Kind : vms_kind {\n")
             else:
                 wr("enum class Kind {\n")
+            wr("  INVALID = 0,\n")
             wr("  END,\n")
             for n, event in enumerate(events):
                 wr(f"  {event.name.name},\n")
@@ -113,7 +114,7 @@ class CodeGenCpp(CodeGen):
 
             wr("  } data;\n\n")
 
-            wr("  TraceEvent() = default;\n")
+            wr("  TraceEvent(): Event(Kind::INVALID) {}\n")
             wr("  TraceEvent(Kind k) : Event(k) {}\n")
             if vamos_compatible:
                 wr("  TraceEvent(Kind k, vms_eventid id) : Event(k, id) {}\n")
