@@ -6,7 +6,7 @@ from sys import stderr
 
 
 class CodeGen:
-    def __init__(self, args, ctx, out_dir:str = None):
+    def __init__(self, args, ctx, out_dir: str = None):
         self.args = args
         self.out_dir = abspath(out_dir or args.out_dir)
         self.templates_path = None
@@ -51,7 +51,7 @@ class CodeGen:
         else:
             shutilcopy(path, self.out_dir)
 
-    def create_out_dir(self, overwrite_if_exists: bool =False):
+    def create_out_dir(self, overwrite_if_exists: bool = False):
         try:
             mkdir(self.out_dir)
         except OSError:

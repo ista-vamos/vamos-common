@@ -31,15 +31,14 @@ class CodeGenCpp(CodeGen):
                 wr("enum class Kind {\n")
             wr("  END,\n")
             for n, event in enumerate(events):
-                wr(
-                    f'  {event.name.name},\n'
-                )
+                wr(f"  {event.name.name},\n")
             wr("};\n\n")
 
             if vamos_compatible:
                 wr("using Event = vamos::Event;\n\n")
             else:
-                wr("""
+                wr(
+                    """
                    class Event {
                      Kind _kind;
 
@@ -49,13 +48,15 @@ class CodeGenCpp(CodeGen):
 
                    };\n
 
-                   """)
+                   """
+                )
 
             wr("#endif\n")
 
         with self.new_file("event_and_id.h") as f:
 
-            f.write(f"""
+            f.write(
+                f"""
                 #ifndef VAMOS_EVENT_AND_ID_H
                 #define VAMOS_EVENT_AND_ID_H\n\n
 
@@ -70,8 +71,8 @@ class CodeGenCpp(CodeGen):
                 }};
 
                 #endif
-            """)
-
+            """
+            )
 
         with self.new_file("events.h") as f:
             wr = f.write
@@ -80,7 +81,7 @@ class CodeGenCpp(CodeGen):
                 "#define VAMOS_CODEGEN_EVENTS_EVENTS_H_\n\n"
             )
             # FIXME: include `cstdint` only when needed
-            wr('#include <cstdint>\n')
+            wr("#include <cstdint>\n")
             wr('#include "event.h"\n')
 
             # wr("#ifdef DEBUG\n")
@@ -150,9 +151,7 @@ class CodeGenCpp(CodeGen):
         wr(f"struct {ename} : public TraceEvent {{\n")
         wr(f"  {ename}()  = default;\n")
         if vamos_compatible:
-            wr(
-                f"  {ename}(vms_eventid id) : Event((vms_kind)Kind::{sname}, id) {{}}\n"
-            )
+            wr(f"  {ename}(vms_eventid id) : Event((vms_kind)Kind::{sname}, id) {{}}\n")
 
         if event.fields:
             params_str = ", ".join(
@@ -177,9 +176,13 @@ class CodeGenCpp(CodeGen):
                 )
         wr("\n")
         for field in event.fields:
-            wr(f'  auto {field.name.name}() const {{ return data.{sname}.{field.name.name}; }}\n')
+            wr(
+                f"  auto {field.name.name}() const {{ return data.{sname}.{field.name.name}; }}\n"
+            )
         wr(f"}};\n\n")
-        wr(f'static_assert(sizeof({ename}) == sizeof(TraceEvent), "ABI mismatch! {ename} should be just a convenient wrapper around TraceEvent.");\n\n')
+        wr(
+            f'static_assert(sizeof({ename}) == sizeof(TraceEvent), "ABI mismatch! {ename} should be just a convenient wrapper around TraceEvent.");\n\n'
+        )
         # wr("#ifdef DEBUG\n")
         wr(f"std::ostream &operator<<(std::ostream &s, const {ename} &ev);\n")
         wr(
@@ -204,13 +207,13 @@ class CodeGenCpp(CodeGen):
         sname = event.name.name
 
         # print event name
-        wr(
-            f'  s << color_blue << "{sname}" << color_reset << "(";\n'
-        )
+        wr(f'  s << color_blue << "{sname}" << color_reset << "(";\n')
 
         # print ID
         if self._vamos_compatible:
-            wr(f'  s << color_red << std::setw(2) << std::right << {id_str} << color_reset;\n')
+            wr(
+                f"  s << color_red << std::setw(2) << std::right << {id_str} << color_reset;\n"
+            )
 
         # print fields
         if not event.fields:
@@ -225,7 +228,9 @@ class CodeGenCpp(CodeGen):
                         f'  s << "{field.name.name}=\\"" << ev.data.{sname}{field.name.name} << "\\"";\n'
                     )
                 else:
-                    wr(f'  s << "{field.name.name}=" << ev.data.{sname}.{field.name.name};\n')
+                    wr(
+                        f'  s << "{field.name.name}=" << ev.data.{sname}.{field.name.name};\n'
+                    )
             wr('  s << ")";\n\n')
         wr("  return s;\n")
 
