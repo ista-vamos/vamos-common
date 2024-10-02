@@ -138,6 +138,8 @@ class CodeGenCpp(CodeGen):
             )
             wr("};\n\n")
 
+            wr(f"std::ostream &operator<<(std::ostream &s, const TraceEvent &ev);\n")
+
             for event in events:
                 self._gen_event(event, wr)
 
@@ -254,4 +256,16 @@ class CodeGenCpp(CodeGen):
                 self._gen_print_event(wr, event, "data.id")
                 wr("}\n\n")
 
-            # wr("#endif\n")
+            wr(f"std::ostream &operator<<(std::ostream &s, const TraceEvent &ev) {{\n")
+            wr("switch(ev.kind()) {")
+            wr(' case Kind::END: s << "END"; break;\n')
+            for event in events:
+                sname = event.name.name
+                ename = f"Event_{sname}"
+                wr(
+                    f" case Kind::{sname}: s << static_cast<const {ename}&>(ev); break;\n"
+                )
+            wr(" default: abort();\n")
+            wr("};\n")
+            wr("   return s;\n")
+            wr("}\n\n")
