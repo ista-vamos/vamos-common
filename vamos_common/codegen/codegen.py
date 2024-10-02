@@ -1,7 +1,8 @@
-from os import mkdir
+from os import mkdir, listdir
 from os.path import join as pathjoin, abspath, dirname
 from re import compile as re_compile
 from shutil import rmtree, copy as shutilcopy
+from subprocess import run
 from sys import stderr
 
 
@@ -83,11 +84,6 @@ class CodeGen:
     def get_path(self, name: str) -> str:
         return pathjoin(self.out_dir, name)
 
-    def try_clang_format_file(self, name):
-        from subprocess import run
-
-        run(["clang-format", "-i", self.get_path(name)])
-
     def new_dbg_file(self, name: str):
         filename = pathjoin(self.out_dir, "dbg/", name)
         return open(filename, "w")
@@ -129,3 +125,18 @@ class CodeGen:
             write = stream.write
             for line in infl:
                 write(line)
+
+    def try_clang_format_file(self, name):
+        from subprocess import run
+
+        run(["clang-format", "-i", self.get_path(name)])
+
+    def format_generated_code(self, dir_path=None):
+        # format the files if we have clang-format
+        # FIXME: check clang-format properly instead of catching the exception
+        try:
+            for path in listdir(dir_path or self.out_dir):
+                if path.endswith(".h") or path.endswith(".cpp"):
+                    run(["clang-format", "-i", f"{self.out_dir}/{path}"])
+        except FileNotFoundError:
+            pass
