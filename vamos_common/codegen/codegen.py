@@ -88,10 +88,8 @@ class CodeGen:
         filename = pathjoin(self.out_dir, "dbg/", name)
         return open(filename, "w")
 
-    def gen_file(self, infile, outfile, values):
+    def gen_file(self, infile, outfile, values, from_dir=None):
         """
-        (A simple version of `gen_file`, to be removed in the future.)
-
         Generate configuration file by replacing key-values pairs in the `infile`
         and writing the resulting file into `outfile`. Each key is of the form `@KEY@`
         and values is a dictionary mapping the keys into the values, e.g.:
@@ -99,7 +97,7 @@ class CodeGen:
         """
         if outfile in self.args.overwrite_file:
             return
-        inpath = pathjoin(self.templates_path, infile)
+        inpath = pathjoin(from_dir if from_dir is not None else self.templates_path, infile)
         outpath = pathjoin(self.out_dir, outfile)
         with open(inpath, "r") as infl:
             with open(outpath, "w") as outfl:
